@@ -7,14 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="CodeFile1.exe" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="CodeFile1.exe" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="12.18.0" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.35.4" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />

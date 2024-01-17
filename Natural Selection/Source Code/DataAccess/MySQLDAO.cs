@@ -1,6 +1,6 @@
 ﻿//dotnet add package MySql.Data
 using MySql.Data.MySqlClient;
-
+using System.Reflection.Metadata;
 
 namespace DataAccessLibraryCraftVerify
 {
@@ -27,6 +27,7 @@ namespace DataAccessLibraryCraftVerify
                         try
                         {
                             rowsaffected += command.ExecuteNonQuery();
+                            transaction.Commit();
                         }
                         catch
                         {
@@ -52,8 +53,8 @@ namespace DataAccessLibraryCraftVerify
                 throw new ArgumentNullException();
             }
             #endregion
-
-            int rowsaffected = 0;
+            MySqlDataReader read = null;
+            string attributevalue = null;
             using (MySqlConnection connection = new MySqlConnection(connString))
             {
                 connection.Open();
@@ -61,20 +62,17 @@ namespace DataAccessLibraryCraftVerify
                 {
                     using (MySqlCommand command = new MySqlCommand(sqlcommand, connection, transaction))
                     {
-                        try
+                        using (read = command.ExecuteReader())
                         {
-                            var read = command.ExecuteReader();
-                            transaction.Commit();
-                        }
-                        catch
-                        {
-                            transaction.Rollback();
-                            throw;
+                            if (read.Read())
+                            {
+                                attributevalue = read["YourAttribute"].ToString();
+                            }
                         }
                     }
                 }
             }
-            return "Shit";
+            return attributevalue;
         }
 
     }

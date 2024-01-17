@@ -26,6 +26,7 @@ namespace DataAccessLibraryCraftVerify
                         try
                         {
                             rowsaffected += command.ExecuteNonQuery();
+                            transaction.Commit();
                         }
                         catch
                         {
@@ -41,6 +42,7 @@ namespace DataAccessLibraryCraftVerify
 
         public string GetAttribute(string connString, string sqlcommand)
         {
+            #region Validate arguments
             if (connString == null)
             {
                 throw new ArgumentNullException();
@@ -49,8 +51,9 @@ namespace DataAccessLibraryCraftVerify
             {
                 throw new ArgumentNullException();
             }
-
-            int rowsaffected = 0;
+            #endregion
+            SqlDataReader read = null;
+            string attributevalue = null;
             using (SqlConnection connection = new SqlConnection(connString))
             {
                 connection.Open();
@@ -58,21 +61,17 @@ namespace DataAccessLibraryCraftVerify
                 {
                     using (SqlCommand command = new SqlCommand(sqlcommand, connection, transaction))
                     {
-                        try
+                        using (read = command.ExecuteReader())
                         {
-                            var read = command.ExecuteReader();
-                            transaction.Commit();
-                        }
-                        catch
-                        {
-                            transaction.Rollback();
-                            throw;
+                            if (read.Read())
+                            {
+                                attributevalue = read["YourAttribute"].ToString();
+                            }
                         }
                     }
                 }
-
             }
-            return "Shit";
+            return attributevalue;
         }
     }
 }
