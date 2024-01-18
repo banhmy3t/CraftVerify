@@ -1,4 +1,3 @@
-// Interface defining the contract for profile modification operations.
 public interface IProfileModification
 {
     bool UpdateUserProfile(string userId, string newBio, byte[] newProfilePhoto);
