@@ -14,13 +14,23 @@ namespace DataAccessLibraryCraftVerify.Tests
         [TestMethod()]
         public void InsertAttributeTest()
         {
-            Assert.Fail();
+            string SqlServerconnString = "Server=localhost;Database=CraftVerify;User Id=admin;Password=admin;TrustServerCertificate=true";
+            //string MySqlServerconnString = "@Server=myServerAddress;Database=myDataBase;User=myUsername;Password=myPassword;\r\n";
+
+            string INSERTsqlcommand = "INSERT INTO ClaimPrinciple (claim, stuff, hashPrinciple) VALUES ('admin', 'admin', 'aikjwnrvikhjqb3nrb');";
+            SQLServerDAO sqlDAO = new SQLServerDAO();
+
+            Assert.IsTrue((sqlDAO.InsertAttribute(SqlServerconnString, INSERTsqlcommand)) == 1);
         }
 
         [TestMethod()]
         public void GetAttributeTest()
         {
-            Assert.Fail();
+            string SqlServerconnString = "Server=localhost;Database=CraftVerify;User Id=admin;Password=admin;TrustServerCertificate=true";
+            string GETsqlcommand = "SELECT * FROM ClaimPrinciple WHERE claim = 'admin';";
+            SQLServerDAO sqlDAO = new SQLServerDAO();
+            Console.WriteLine(sqlDAO.GetAttribute(SqlServerconnString, GETsqlcommand));
+            Assert.IsTrue(sqlDAO.GetAttribute(SqlServerconnString, GETsqlcommand) != null);
         }
     }
 }
