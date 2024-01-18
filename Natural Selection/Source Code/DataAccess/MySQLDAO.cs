@@ -1,4 +1,5 @@
 ﻿//dotnet add package MySql.Data
+using Microsoft.Data.SqlClient;
 using MySql.Data.MySqlClient;
 using System.Reflection.Metadata;
 
@@ -8,6 +9,7 @@ namespace DataAccessLibraryCraftVerify
     {
         public int InsertAttribute(string connString, string sqlcommand)
         {
+            #region Validate Arguments
             if (connString == null)
             {
                 throw new ArgumentNullException();
@@ -16,6 +18,7 @@ namespace DataAccessLibraryCraftVerify
             {
                 throw new ArgumentNullException();
             }
+            #endregion
             int rowsaffected = 0;
             using (MySqlConnection connection = new MySqlConnection(connString))
             {
@@ -41,7 +44,7 @@ namespace DataAccessLibraryCraftVerify
             return rowsaffected;
         }
 
-        public string GetAttribute(string connString, string sqlcommand)
+        public ICollection<object>? GetAttribute(string connString, string sqlcommand)
         {
             #region Validate arguments
             if (connString == null)
@@ -53,8 +56,8 @@ namespace DataAccessLibraryCraftVerify
                 throw new ArgumentNullException();
             }
             #endregion
-            MySqlDataReader read = null;
-            string attributevalue = null;
+            MySqlDataReader? read = null;
+            ICollection<object>? attributevalue = null;
             using (MySqlConnection connection = new MySqlConnection(connString))
             {
                 connection.Open();
@@ -64,9 +67,11 @@ namespace DataAccessLibraryCraftVerify
                     {
                         using (read = command.ExecuteReader())
                         {
-                            if (read.Read())
+                            while (read.Read())
                             {
-                                attributevalue = read["YourAttribute"].ToString();
+                                var values = new object[read.FieldCount];
+                                read.GetValues(values);
+                                attributevalue.Add(values);
                             }
                         }
                     }

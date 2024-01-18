@@ -2,6 +2,6 @@
 {
     public interface IReadOnlyDAO
     {
-        public string GetAttribute(string connString, string sqlcommand);
+        public ICollection<object>? GetAttribute(string connString, string sqlcommand);
     }
 }

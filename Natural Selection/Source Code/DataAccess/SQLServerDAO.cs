@@ -6,6 +6,7 @@ namespace DataAccessLibraryCraftVerify
     {
         public int InsertAttribute(string connString, string sqlcommand)
         {
+            #region Validate Arguments
             if (connString == null)
             {
                 throw new ArgumentNullException();
@@ -14,7 +15,7 @@ namespace DataAccessLibraryCraftVerify
             {
                 throw new ArgumentNullException();
             }
-
+            #endregion
             int rowsaffected = 0;
             using (SqlConnection connection = new SqlConnection(connString))
             {
@@ -40,7 +41,7 @@ namespace DataAccessLibraryCraftVerify
             return rowsaffected;
         }
 
-        public string GetAttribute(string connString, string sqlcommand)
+        public ICollection<object>? GetAttribute(string connString, string sqlcommand)
         {
             #region Validate arguments
             if (connString == null)
@@ -52,8 +53,8 @@ namespace DataAccessLibraryCraftVerify
                 throw new ArgumentNullException();
             }
             #endregion
-            SqlDataReader read = null;
-            string attributevalue = null;
+            SqlDataReader? read = null;
+            ICollection<object>? attributevalue = new List<object>();
             using (SqlConnection connection = new SqlConnection(connString))
             {
                 connection.Open();
@@ -63,9 +64,11 @@ namespace DataAccessLibraryCraftVerify
                     {
                         using (read = command.ExecuteReader())
                         {
-                            if (read.Read())
+                            while (read.Read())
                             {
-                                attributevalue = read["YourAttribute"].ToString();
+                                var values = new object[read.FieldCount];
+                                read.GetValues(values);
+                                attributevalue.Add(values);
                             }
                         }
                     }
