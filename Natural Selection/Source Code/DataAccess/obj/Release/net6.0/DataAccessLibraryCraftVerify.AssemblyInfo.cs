@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DataAccessLibraryCraftVerify")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a6c60ab08f7354bcc5603d119a31d063957d76d9")]
 [assembly: System.Reflection.AssemblyProductAttribute("DataAccessLibraryCraftVerify")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DataAccessLibraryCraftVerify")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
