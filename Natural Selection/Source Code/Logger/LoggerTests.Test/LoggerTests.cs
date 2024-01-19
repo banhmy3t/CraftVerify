@@ -1,120 +1,80 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
 using System;
-using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace LoggingLib.Tests
+[TestClass]
+public class LoggerTests
 {
-    [TestClass]
-    public class LoggerTests
+    private ILogger _logger;
+    private ILoggingDataAccess _loggingDataAccess;
+
+    [TestInitialize]
+    public void Initialize()
     {
-        private Logger _logger;
-        private InMemoryLoggingDataAccess _dataAccess;
+        // Initialize the Logger and LoggingDataAccess with actual database connection
+        // Update the connection string as per your test database
+        var connectionString = "Server=localhost;Database=master;User Id=Parth;Password=1762;TrustServerCertificate=true";
+        _loggingDataAccess = new LoggingDataAccess(connectionString);
+        _logger = new Logger(_loggingDataAccess);
+    }
 
-        [TestInitialize]
-        public void Initialize()
+    [TestMethod]
+    public async Task LogAsync_OperationCompletesWithinThreeSeconds()
+    {
+        var logEntry = new LogEntry("UserHash", "ActionType", "LogStatus", "LogDetail");
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        await _logger.LogAsync(logEntry);
+        stopwatch.Stop();
+
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds < 3000, "Logging operation took longer than 3 seconds.");
+    }
+
+    [TestMethod]
+    public async Task LogAsync_ShouldSaveLogEntry()
+    {
+        var logEntry = new LogEntry("UserHash", "ActionType", "LogStatus", "LogDetail");
+        await _logger.LogAsync(logEntry);
+
+        // Wait for the queue to be processed
+        await _logger.WaitForQueueToEmptyAsync();
+
+        var lastEntry = await _loggingDataAccess.GetLastInsertedLogEntryAsync();
+        Assert.IsNotNull(lastEntry, "No log entry was retrieved from the database.");
+
+        Assert.AreEqual(logEntry.UserHash.Trim(), lastEntry.UserHash.Trim());
+        Assert.AreEqual(logEntry.ActionType, lastEntry.ActionType);
+        Assert.AreEqual(logEntry.LogStatus, lastEntry.LogStatus);
+        Assert.AreEqual(logEntry.LogDetail, lastEntry.LogDetail);
+    }
+
+    [TestMethod]
+    public async Task LogAsync_ShouldBeThreadSafe()
+    {
+        int numberOfThreads = 10;
+        var tasks = new Task[numberOfThreads];
+        for (int i = 0; i < numberOfThreads; i++)
         {
-            _dataAccess = new InMemoryLoggingDataAccess();
-            _logger = new Logger(_dataAccess);
+            tasks[i] = Task.Run(() => _logger.LogAsync(new LogEntry("UserHash", "ActionType", "LogStatus", "LogDetail")));
         }
 
-        [TestMethod]
-        public async Task LogAsync_OperationCompletesWithinThreeSeconds()
-        {
-            var logEntry = new LogEntry("UserHash", "Info", "TestCategory", "Test log message");
+        await Task.WhenAll(tasks);
+    }
 
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
+    [TestMethod]
+    public async Task LogAsync_ShouldLogWithUTCTimestamp()
+    {
+        var logEntry = new LogEntry("UserHash", "ActionType", "LogStatus", "LogDetail");
+        var entryTime = DateTime.UtcNow;
+        await _logger.LogAsync(logEntry);
 
-            await _logger.LogAsync(logEntry);
+        // Wait for the queue to be processed
+        await _logger.WaitForQueueToEmptyAsync();
 
-            stopwatch.Stop();
-            Assert.IsTrue(stopwatch.ElapsedMilliseconds < 3000, "Logging operation took longer than 3 seconds.");
-        }
+        var lastEntry = await _loggingDataAccess.GetLastInsertedLogEntryAsync();
+        var timeDifference = (lastEntry.LogTime - entryTime).Duration();
 
-        [TestMethod]
-        public async Task LogAsync_ShouldSaveLogEntry()
-        {
-            var logEntry = new LogEntry("UserHash", "Info", "TestCategory", "Test log message");
-
-            await _logger.LogAsync(logEntry);
-
-            // Allow time for the log entry to be processed
-            await Task.Delay(500); // Adjust as necessary
-
-            // Assert
-            bool logEntryExists = _dataAccess.LogEntries.Contains(logEntry);
-            Assert.IsTrue(logEntryExists, "Log entry was not saved correctly.");
-        }
-
-
-        [TestMethod]
-        public async Task LogAsync_ShouldBeThreadSafe()
-        {
-            var tasks = new List<Task>();
-            int numberOfParallelLogs = 100;
-
-            for (int i = 0; i < numberOfParallelLogs; i++)
-            {
-                var logEntry = new LogEntry("UserHash", "Debug", "TestCategory", $"Parallel log {i}");
-                tasks.Add(_logger.LogAsync(logEntry));
-            }
-
-            await Task.WhenAll(tasks);
-
-            // Allow time for all log entries to be processed
-            await Task.Delay(1000); // Adjust the delay as needed
-
-            // Assert
-            Assert.AreEqual(numberOfParallelLogs, _dataAccess.LogEntries.Count, "Not all log entries were saved.");
-        }
-
-
-        [TestMethod]
-        public async Task LogAsync_ShouldLogWithUTCTimestamp()
-        {
-            var logEntry = new LogEntry("UserHash", "Debug", "TestCategory", "Test UTC timestamp");
-
-            await _logger.LogAsync(logEntry);
-
-            // Allow time for the log entry to be processed
-            await Task.Delay(500); // Adjust as necessary
-
-            var savedLog = _dataAccess.LogEntries.LastOrDefault();
-            Assert.IsNotNull(savedLog, "Log entry was not found.");
-            Assert.IsTrue(savedLog.LogTime.ToUniversalTime() == savedLog.LogTime, "Log time is not UTC.");
-        }
-
-
-        // Additional test methods...
-
-        private class InMemoryLoggingDataAccess : ILoggingDataAccess
-        {
-            public List<LogEntry> LogEntries { get; } = new List<LogEntry>();
-            public List<LogEntry> ArchivedLogEntries { get; } = new List<LogEntry>();
-
-            public Task SaveLogAsync(LogEntry logEntry)
-            {
-                LogEntries.Add(logEntry);
-                return Task.CompletedTask;
-            }
-
-            public Task ArchiveLogsAsync()
-            {
-                var cutoffDate = DateTime.UtcNow.AddDays(-30);
-                var entriesToArchive = LogEntries.Where(entry => entry.LogTime < cutoffDate).ToList();
-
-                foreach (var entry in entriesToArchive)
-                {
-                    LogEntries.Remove(entry);
-                    ArchivedLogEntries.Add(entry);
-                }
-
-                return Task.CompletedTask;
-            }
-        }
-
+        Assert.IsTrue(timeDifference < TimeSpan.FromSeconds(2), "The timestamp is not within the expected range of UTC time.");
     }
 }

@@ -1,5 +1,6 @@
-﻿using MySql.Data.MySqlClient;
+﻿using System.Data.SqlClient; // Replaced MySQL client with SQL Server client
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 public class LoggingDataAccess : ILoggingDataAccess
 {
@@ -7,18 +8,19 @@ public class LoggingDataAccess : ILoggingDataAccess
 
     public LoggingDataAccess(string connectionString)
     {
-        _connectionString = connectionString;
+        // Example SQL Server connection string (update with your server details)
+        _connectionString = "Server=localhost;Database=master;User Id=Parth;Password=1762;TrustServerCertificate=true";
     }
 
     public async Task SaveLogAsync(LogEntry logEntry)
     {
-        var query = "INSERT INTO LogEntries (UserHash, ActionType, LogTime, LogStatus, LogDetail) VALUES (@UserHash, @ActionType, @LogTime, @LogStatus, @LogDetail)";
+        var query = "INSERT INTO LogTable (UserHash, ActionType, LogTime, LogStatus, LogDetail) VALUES (@UserHash, @ActionType, @LogTime, @LogStatus, @LogDetail)";
 
-        using (var connection = new MySqlConnection(_connectionString))
+        using (var connection = new SqlConnection(_connectionString))
         {
             await connection.OpenAsync();
 
-            using (var command = new MySqlCommand(query, connection))
+            using (var command = new SqlCommand(query, connection))
             {
                 command.Parameters.AddWithValue("@UserHash", logEntry.UserHash);
                 command.Parameters.AddWithValue("@ActionType", logEntry.ActionType);
@@ -31,20 +33,51 @@ public class LoggingDataAccess : ILoggingDataAccess
         }
     }
 
-    public async Task ArchiveLogsAsync()
+    public async Task<LogEntry> GetLastInsertedLogEntryAsync()
     {
-        var moveOldEntriesQuery = @"
-        INSERT INTO ArchivedLogEntries (LogID, UserHash, ActionType, LogTime, LogStatus, LogDetail)
-        SELECT LogID, UserHash, ActionType, LogTime, LogStatus, LogDetail
-        FROM LogEntries
-        WHERE LogTime < DATE_SUB(NOW(), INTERVAL 1 YEAR);
+        var query = "SELECT TOP 1 * FROM LogTable ORDER BY LogID DESC"; // Adjust the query as per your table schema
 
-        DELETE FROM LogEntries WHERE LogTime < DATE_SUB(NOW(), INTERVAL 1 YEAR);";
-
-        using (var connection = new MySqlConnection(_connectionString))
+        using (var connection = new SqlConnection(_connectionString))
         {
             await connection.OpenAsync();
-            using (var command = new MySqlCommand(moveOldEntriesQuery, connection))
+            using (var command = new SqlCommand(query, connection))
+            {
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                        return new LogEntry(
+                            reader.GetString(reader.GetOrdinal("UserHash")),
+                            reader.GetString(reader.GetOrdinal("ActionType")),
+                            reader.GetString(reader.GetOrdinal("LogStatus")),
+                            reader.GetString(reader.GetOrdinal("LogDetail"))
+                        ) 
+                        {
+                            LogID = reader.GetInt64(reader.GetOrdinal("LogID")),
+                            LogTime = reader.GetDateTime(reader.GetOrdinal("LogTime"))
+                        };
+                    }
+                }
+            }
+        }
+
+        return null; // or handle as appropriate
+    }
+    public async Task ArchiveLogsAsync()
+    {
+        // Example of archiving logs (update query as per your requirement)
+        var moveOldEntriesQuery = @"
+            INSERT INTO ArchivedLogEntries (LogID, UserHash, ActionType, LogTime, LogStatus, LogDetail)
+            SELECT LogID, UserHash, ActionType, LogTime, LogStatus, LogDetail
+            FROM LogTable
+            WHERE LogTime < DATEADD(YEAR, -1, GETDATE());
+
+            DELETE FROM LogTable WHERE LogTime < DATEADD(YEAR, -1, GETDATE());";
+
+        using (var connection = new SqlConnection(_connectionString))
+        {
+            await connection.OpenAsync();
+            using (var command = new SqlCommand(moveOldEntriesQuery, connection))
             {
                 await command.ExecuteNonQueryAsync();
             }
