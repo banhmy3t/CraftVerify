@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DataAccessLibraryCraftVerifyTests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a6c60ab08f7354bcc5603d119a31d063957d76d9")]
 [assembly: System.Reflection.AssemblyProductAttribute("DataAccessLibraryCraftVerifyTests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DataAccessLibraryCraftVerifyTests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
