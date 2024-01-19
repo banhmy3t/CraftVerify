@@ -15,3 +15,4 @@ C:\Users\kamer\Documents\GitHub\CraftVerify\Natural Selection\Source Code\DataAc
 C:\Users\kamer\Documents\GitHub\CraftVerify\Natural Selection\Source Code\DataAccess\obj\Debug\net6.0\refint\DataAccessLibraryCraftVerify.dll
 C:\Users\kamer\Documents\GitHub\CraftVerify\Natural Selection\Source Code\DataAccess\obj\Debug\net6.0\DataAccessLibraryCraftVerify.pdb
 C:\Users\kamer\Documents\GitHub\CraftVerify\Natural Selection\Source Code\DataAccess\obj\Debug\net6.0\ref\DataAccessLibraryCraftVerify.dll
+C:\Users\kamer\Documents\GitHub\CraftVerify\Natural Selection\Source Code\DataAccess\obj\Debug\net6.0\DataAccessLibraryCraftVerify.sourcelink.json
