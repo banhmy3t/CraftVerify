@@ -8,7 +8,7 @@ class ServiceConfigurator
         // Setup DI
         var serviceProvider = new ServiceCollection()
             .AddSingleton<ILoggingDataAccess, LoggingDataAccess>(serviceProvider =>
-                new LoggingDataAccess("Server=hostname;Port=port;Database=your_database;User=user;Password=password;"))
+                new LoggingDataAccess("Server=localhost;Database=master;User Id=Parth;Password=1762;TrustServerCertificate=true"))
 
             .AddSingleton<ILoggingDataAccess, LoggingDataAccess>()
             .AddSingleton<ILogger, Logger>()
